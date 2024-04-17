@@ -16,9 +16,16 @@ jobs:
         id: self-test
         uses: ./
         with:
-          example-input: Hello?
+          type: npm
+          file: test/big-package.json
       - name: Show outputs
         env:
           OUTPUTS: ${{ toJson(steps.self-test.outputs) }}
         run: |
           echo "${OUTPUTS}"
+      - name: Assert results
+        run: |
+          if test "${{ steps.self-test.outputs.version }}" != "1.2.3"; then
+            echo "Expected version 1.2.3, got ${{ steps.self-test.outputs.version }}!"
+            exit 1
+          fi

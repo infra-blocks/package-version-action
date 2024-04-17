@@ -1,28 +1,51 @@
-name: Composite action template
+name: Package Version Action
 description: |
-  This action does nothing meaningful.
+  This action extracts the current version of the package found on the current repository.
 
 inputs:
-  example-input:
-    description: A useless input as an example
+  type:
+    description: The type of package we're looking into.
     required: true
+  file:
+    description: The file containing the package information.
+    required: false
 outputs:
-  example-output:
-    description: You know it.
-    value: ${{ steps.generate-output.outputs.example-output }}
+  version:
+    description: The extracted package version.
+    value: ${{ steps.get-current-version.outputs.version }}
 runs:
   using: "composite"
   steps:
-    - shell: bash
-      run: |
-        if test "${{ runner.debug }}" = "1"; then
-          set -x
-        fi
-        echo "here is your input: ${{ inputs.example-input }}."
-    - id: generate-output
+    - id: parse-inputs
       shell: bash
       run: |
         if test "${{ runner.debug }}" = "1"; then
           set -x
         fi
-        echo "example-output=here is your output" >> ${GITHUB_OUTPUT}
+        
+        package_types=("npm")
+        if test -z "$(echo ${package_types[@]} | fgrep -w "${{ inputs.type }}" )"; then
+          echo "Invalid package type: ${{ inputs.type }}! Expected one of ${package_types[@]}."
+          exit 1
+        fi
+        
+        type="${{ inputs.type }}"
+        if test "$type" = "npm"; then
+          file="${{ inputs.file }}"
+          if test -z "${file}"; then
+            file="package.json"
+          fi
+        fi
+        
+        echo "type=${type}" >> "${GITHUB_OUTPUT}"
+        echo "file=${file}" >> "${GITHUB_OUTPUT}"
+    - id: get-current-version
+      shell: bash
+      run: |
+        if test "${{ runner.debug }}" = "1"; then
+          set -x
+        fi
+        
+        if test "${{ steps.parse-inputs.outputs.type }}" = "npm"; then
+          echo "version=$(jq -r '.version' ${{ steps.parse-inputs.outputs.file }})" >> "${GITHUB_OUTPUT}"
+        fi
