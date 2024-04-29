@@ -12,20 +12,32 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Invoke action
-        id: self-test
+        with:
+          fetch-depth: 0
+      - id: self-test-npm
+        name: Invoke action
         uses: ./
         with:
           type: npm
           file: test/big-package.json
-      - name: Show outputs
+      - name: Show outputs for npm
         env:
-          OUTPUTS: ${{ toJson(steps.self-test.outputs) }}
+          OUTPUTS: ${{ toJson(steps.self-test-npm.outputs) }}
         run: |
           echo "${OUTPUTS}"
       - name: Assert results
         run: |
-          if test "${{ steps.self-test.outputs.version }}" != "1.2.3"; then
-            echo "Expected version 1.2.3, got ${{ steps.self-test.outputs.version }}!"
+          if test "${{ steps.self-test-npm.outputs.version }}" != "1.2.3"; then
+            echo "Expected version 1.2.3, got ${{ steps.self-test-npm.outputs.version }}!"
             exit 1
           fi
+      - id: self-test-git
+        name: Invoke action
+        uses: ./
+        with:
+          type: git
+      - name: Show outputs for git
+        env:
+          OUTPUTS: ${{ toJson(steps.self-test-git.outputs) }}
+        run: |
+          echo "${OUTPUTS}"
