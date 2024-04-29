@@ -23,22 +23,30 @@ runs:
           set -x
         fi
         
-        package_types=("npm")
+        package_types=("npm" "git")
         if test -z "$(echo ${package_types[@]} | fgrep -w "${{ inputs.type }}" )"; then
           echo "Invalid package type: ${{ inputs.type }}! Expected one of ${package_types[@]}."
           exit 1
         fi
         
         type="${{ inputs.type }}"
-        if test "$type" = "npm"; then
-          file="${{ inputs.file }}"
+        file="${{ inputs.file }}"
+        if test "${type}" = "npm"; then
           if test -z "${file}"; then
             file="package.json"
           fi
+        elif test "${type}" = "git"; then
+          if test -n "${file}"; then
+            echo "The git package type does not support custom files!"
+            exit 1
+          fi        
         fi
         
         echo "type=${type}" >> "${GITHUB_OUTPUT}"
-        echo "file=${file}" >> "${GITHUB_OUTPUT}"
+        
+        if test -n "${file}"; then
+          echo "file=${file}" >> "${GITHUB_OUTPUT}"
+        fi
     - id: get-current-version
       shell: bash
       run: |
@@ -48,4 +56,29 @@ runs:
         
         if test "${{ steps.parse-inputs.outputs.type }}" = "npm"; then
           echo "version=$(jq -r '.version' ${{ steps.parse-inputs.outputs.file }})" >> "${GITHUB_OUTPUT}"
+        elif test "${{ steps.parse-inputs.outputs.type }}" = "git"; then
+          commits_count=$(git rev-list --count HEAD)
+          if test "${commits_count}" = "1"; then
+            echo "This action requires to set fetch-depth: 0, but only found one commit on current branch!"
+            exit 1
+          fi
+        
+          # We look for the latest tag (using git version ordering) that matches the semver pattern, as found at https://semver.org/.
+          git_tags=$(git tag --sort=-v:refname)
+          if test -z "${git_tags}"; then
+            echo "No git tags found! Defaulting to 0.0.0."
+            version="0.0.0"
+          else
+            semver_git_tags=$(echo "${git_tags}" | grep -E '^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$')
+            if test -z "${semver_git_tags}"; then
+              echo "No semver git tags found! Defaulting to 0.0.0"
+              version="0.0.0"
+            else
+              latest_semver_git_tag=$(echo "${semver_git_tags}" | head -1)          
+              # We expect the git tags variants to be of the form `v<major>.<minor>.<patch>` however. So we strip out the `v` prefix.
+              version="${latest_semver_git_tag:1}"            
+            fi
+          fi
+        
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
         fi
