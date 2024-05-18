@@ -1,7 +1,7 @@
 # package-version-action
-[![Release](https://github.com/infrastructure-blocks/package-version-action/actions/workflows/git-tag-semver-from-label.yml/badge.svg)](https://github.com/infrastructure-blocks/package-version-action/actions/workflows/git-tag-semver-from-label.yml)
-[![Self Test](https://github.com/infrastructure-blocks/package-version-action/actions/workflows/self-test.yml/badge.svg)](https://github.com/infrastructure-blocks/package-version-action/actions/workflows/self-test.yml)
-[![Update From Template](https://github.com/infrastructure-blocks/package-version-action/actions/workflows/update-from-template.yml/badge.svg)](https://github.com/infrastructure-blocks/package-version-action/actions/workflows/update-from-template.yml)
+[![Release](https://github.com/infra-blocks/package-version-action/actions/workflows/git-tag-semver-from-label.yml/badge.svg)](https://github.com/infra-blocks/package-version-action/actions/workflows/git-tag-semver-from-label.yml)
+[![Self Test](https://github.com/infra-blocks/package-version-action/actions/workflows/self-test.yml/badge.svg)](https://github.com/infra-blocks/package-version-action/actions/workflows/self-test.yml)
+[![Update From Template](https://github.com/infra-blocks/package-version-action/actions/workflows/update-from-template.yml/badge.svg)](https://github.com/infra-blocks/package-version-action/actions/workflows/update-from-template.yml)
 
 This action extracts the version of a package. At the moment, it supports "npm" and "git" packages. It also
 supports overriding the default file where the version is extracted from, where it makes sense. 
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: infrastructure-blocks/package-version-action@v1
+      - uses: infra-blocks/package-version-action@v1
         id: package-version
         with:
           type: npm
@@ -57,7 +57,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: infrastructure-blocks/package-version-action@v1
+      - uses: infra-blocks/package-version-action@v1
         id: package-version
         with:
           type: git
